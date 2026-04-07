@@ -1,0 +1,79 @@
+{
+  "id": "5d90e122",
+  "title": "Quick Search Location Context",
+  "status": "active",
+  "type": "weekly",
+  "team": "AI Search",
+  "category": "story",
+  "workType": "alignment",
+  "summary": "The Context/Search chip initially defaults to the user's current location in the DMS when they open the assistant. Dismissing the chip resets the location to the repository.",
+  "kpi": "",
+  "pm": "Zane Harker",
+  "engLead": "",
+  "linkedTo": "a3f719ca",
+  "state": "Completed an initial Claude code prototype",
+  "nextAction": "Review Claude prototype with Zane and Brandon",
+  "resumeLink": "https://javontaymcelroynd.github.io/quick-answers-location-context/",
+  "stream": "undercurrent",
+  "tags": [
+    "explore"
+  ],
+  "createdAt": "2026-03-18T20:33:56.580Z",
+  "updatedAt": "2026-03-25T15:45:00.021Z",
+  "weekCreated": "2026-W12",
+  "quarterStart": null,
+  "quarterEnd": null,
+  "log": [
+    {
+      "id": "b75a1801",
+      "type": "progress",
+      "content": "Next: Align with Zane",
+      "date": "2026-03-23T14:35:39.762Z"
+    },
+    {
+      "id": "8419de20",
+      "type": "note",
+      "content": "Align on labeling. Do we need to say 'Context: Location' or can we just say 'Location'?",
+      "date": "2026-03-23T14:39:10.660Z"
+    },
+    {
+      "id": "f0a05cbe",
+      "type": "goal",
+      "content": "End of Q2 but ideally end of April private preview release",
+      "date": "2026-03-20T22:00:00.000Z"
+    },
+    {
+      "id": "eb6ed438",
+      "type": "decision",
+      "content": "Location context scoped to Cabinets due to custom cabinet attributes.",
+      "date": "2026-03-20T22:00:00.000Z"
+    },
+    {
+      "id": "87080ae4",
+      "type": "question",
+      "content": "For MVP, do we scoped to only a single location context chip active at a time?",
+      "date": "2026-03-20T22:00:00.000Z"
+    },
+    {
+      "id": "cd38377e",
+      "type": "question",
+      "content": "What does the return response look like for contextual searches?",
+      "date": "2026-03-25T15:23:42.157Z"
+    },
+    {
+      "id": "ec915e1f",
+      "type": "question",
+      "content": "How might contextual search work within the quick search field and within Solstice?",
+      "date": "2026-03-25T15:43:38.187Z"
+    },
+    {
+      "id": "e7ceb93a",
+      "type": "note",
+      "content": "We may not be able to run semantic search queries in quick search without an explicit toggle for AI Search that would treat a query as a AI Search query vs a normal query. Alternatively, we could use regex to determine if a query is a question and to use the AI Search tool.",
+      "date": "2026-03-25T15:45:00.021Z"
+    }
+  ],
+  "kpis": [],
+  "uxPartner": "",
+  "pushToFocus": null
+}

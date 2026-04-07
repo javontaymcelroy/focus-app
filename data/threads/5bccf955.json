@@ -1,0 +1,43 @@
+{
+  "id": "5bccf955",
+  "title": "Error Handling",
+  "status": "active",
+  "type": "weekly",
+  "team": "Tools",
+  "category": "story",
+  "workType": "documentation",
+  "kpi": "Reduce confusion around failed extraction runs",
+  "pm": "Zane Harker",
+  "engLead": "Michael Fairbanks",
+  "linkedTo": "3a73f5c0",
+  "state": "Currently, capturing the failed states of the tabular review tool.",
+  "nextAction": "Team alignment",
+  "resumeLink": "",
+  "stream": "focus",
+  "tags": [],
+  "createdAt": "2026-03-18T14:32:06.969Z",
+  "updatedAt": "2026-03-25T15:17:22.716Z",
+  "weekCreated": "2026-W12",
+  "quarterStart": null,
+  "quarterEnd": null,
+  "log": [
+    {
+      "id": "12d81b8e",
+      "type": "decision",
+      "content": "Make a branch from main and Engineering (Arham and Michael) will implement the branch.",
+      "date": "2026-03-23T17:12:32.103Z"
+    },
+    {
+      "id": "d3a3d845",
+      "type": "decision",
+      "content": "Wait for engineering to push to main before creating a branch",
+      "date": "2026-03-25T15:17:22.716Z"
+    }
+  ],
+  "pushToFocus": null,
+  "summary": "This work introduces a structured, multi-level error handling model for tabular extractions that clearly communicates failure scope (run, document, or cell) and enables faster, more confident decision-making. By reducing redundant error noise and surfacing actionable states in context, it minimizes silent failures, streamlines recovery workflows, and increases trust in extracted data quality.",
+  "kpis": [
+    "Reduce confusion around failed extraction runs"
+  ],
+  "uxPartner": ""
+}

@@ -1,0 +1,37 @@
+{
+  "id": "08ead9bf",
+  "title": "Ingesting Word Comments within Editor",
+  "status": "active",
+  "type": "weekly",
+  "team": "Editor Tool",
+  "category": "feature",
+  "workType": "exploration",
+  "summary": "This explores how AI edits can be made immediately verifiable in legal review workflows. Currently, AI changes remove the reasoning that lawyers rely on to validate risk. That forces reviewers to redo the thinking themselves, killing speed and trust. This work focuses on preserving reasoning at the point of edit so AI behaves less like a black box and more like a junior associate whose logic can be quickly checked.",
+  "kpi": "Reduction in time to validate AI-applied edits without additional manual analysis.",
+  "pm": "Kasey Friedland",
+  "engLead": "",
+  "linkedTo": null,
+  "state": "Research and prototyping",
+  "nextAction": "Align with Amy",
+  "resumeLink": "",
+  "stream": "focus",
+  "tags": [],
+  "createdAt": "2026-03-19T14:08:25.325Z",
+  "updatedAt": "2026-03-23T14:32:08.635Z",
+  "weekCreated": "2026-W12",
+  "quarterStart": null,
+  "quarterEnd": null,
+  "log": [
+    {
+      "id": "7d72be68",
+      "type": "progress",
+      "content": "State: Research and prototyping → Next: Share research and prototype with Amy",
+      "date": "2026-03-19T19:48:18.794Z"
+    }
+  ],
+  "pushToFocus": null,
+  "kpis": [
+    "Reduction in time to validate AI-applied edits without additional manual analysis."
+  ],
+  "uxPartner": "Amy Kucksdorf"
+}

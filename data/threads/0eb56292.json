@@ -1,0 +1,43 @@
+{
+  "id": "0eb56292",
+  "title": "Table Manipulation",
+  "status": "active",
+  "type": "weekly",
+  "team": "Tools",
+  "category": "story",
+  "workType": "design",
+  "kpi": "Achieve 80% of users performing at least 3 manipulation actions (sort, filter, search) per review session within the first month of launch.",
+  "pm": "Zane Harker",
+  "engLead": "Michael Fairbanks",
+  "linkedTo": "3a73f5c0",
+  "state": "",
+  "nextAction": "Design QA after implementation",
+  "resumeLink": "",
+  "stream": "undercurrent",
+  "tags": [],
+  "createdAt": "2026-03-18T17:39:58.441Z",
+  "updatedAt": "2026-03-23T14:32:13.344Z",
+  "weekCreated": "2026-W12",
+  "log": [
+    {
+      "id": "ced6a472",
+      "type": "decision",
+      "content": "reordering columns and tables affects all viewers of the extraction table",
+      "date": "2026-03-18T17:49:05.572Z"
+    },
+    {
+      "id": "9151a75f",
+      "type": "decision",
+      "content": "the search box doesn't count as \"filter\" for these purposes; search box state doesn't need to be preserved and only affects the individual user ephemerally.",
+      "date": "2026-03-18T17:52:52.741Z"
+    },
+    {
+      "id": "6bf85ef5",
+      "type": "decision",
+      "content": "We may add the notion of a \"filter view\" that is separate from the table-level filter state and could be entered into or modified independently (similar to Google Sheets)",
+      "date": "2026-03-18T17:53:35.573Z"
+    }
+  ],
+  "summary": "This project converts the tabular review tool from a static output into an interactive dataset, allowing legal professionals to efficiently organize, isolate, and analyze extracted data. By incorporating key manipulation features like reordering, sorting, filtering, and searching, it helps users quickly identify patterns, assess risks, and concentrate on pertinent documents without manual effort. This enhances review speed, minimizes oversight risk, and boosts confidence in handling AI-generated data.",
+  "pushToFocus": null
+}

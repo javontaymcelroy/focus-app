@@ -1,0 +1,25 @@
+{
+  "name": "focus",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -n api,ui -c blue,magenta \"node server/index.js\" \"vite\"",
+    "build": "vite build",
+    "start": "vite build && node server/index.js",
+    "preview": "vite build && node server/index.js",
+    "seed": "node scripts/seed-kv.js"
+  },
+  "dependencies": {
+    "@vercel/kv": "^3.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.1",
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "concurrently": "^9.1.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "vite": "^6.0.0"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "id": "b391167a",
+  "title": "File Picker",
+  "status": "active",
+  "type": "weekly",
+  "team": "Tools",
+  "category": "feature",
+  "workType": "alignment",
+  "kpi": "",
+  "pm": "Zane Harker",
+  "engLead": "Michael Fairbanks",
+  "linkedTo": "3a73f5c0",
+  "state": "Not shipping in v0, waiting for v1?",
+  "nextAction": "Requirements alignment",
+  "resumeLink": "https://ndbase.atlassian.net/wiki/x/AoC1Pw",
+  "stream": "undercurrent",
+  "tags": [
+    "explore"
+  ],
+  "createdAt": "2026-03-18T16:57:53.404Z",
+  "updatedAt": "2026-03-19T18:20:41.671Z",
+  "weekCreated": "2026-W12",
+  "log": [
+    {
+      "id": "d9126cae",
+      "type": "decision",
+      "content": "We will not ship a file picker component to internal users in v0. They will have to rely on dragging and dropping files from ndWeb into the Assistant.",
+      "date": "2026-03-19T18:19:08.667Z"
+    },
+    {
+      "id": "9deed6d0",
+      "type": "decision",
+      "content": "We will use the existing ISV component to build the new file picker component.",
+      "date": "2026-03-19T18:19:32.081Z"
+    },
+    {
+      "id": "54750fb1",
+      "type": "decision",
+      "content": "Zane create a file picker requirements doc",
+      "date": "2026-03-19T18:19:40.033Z"
+    }
+  ],
+  "pushToFocus": null,
+  "summary": "",
+  "kpis": [],
+  "uxPartner": ""
+}

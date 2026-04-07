@@ -1,0 +1,30 @@
+{
+  "lastTouched": "5d90e122",
+  "focusOrder": [
+    "5bccf955",
+    "08ead9bf",
+    "b391167a",
+    "3a73f5c0",
+    "a3f719ca"
+  ],
+  "undercurrent": [
+    {
+      "id": "5d90e122",
+      "title": "Quick Search Location Context",
+      "tag": "explore",
+      "createdAt": "2026-03-18T20:33:56.580Z"
+    },
+    {
+      "id": "0eb56292",
+      "title": "Table Manipulation",
+      "tag": "explore",
+      "createdAt": "2026-03-18T17:39:58.441Z"
+    },
+    {
+      "id": "3b924532",
+      "title": "Tool Status Indicator",
+      "tag": "explore",
+      "createdAt": "2026-03-18T19:45:51.228Z"
+    }
+  ]
+}
