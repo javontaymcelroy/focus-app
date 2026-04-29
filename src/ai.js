@@ -152,6 +152,75 @@ Query guidance:
   )
 }
 
+export async function pressureTestThread({ thread }) {
+  const allLog = (thread.log || []).slice().sort((a, b) => new Date(a.date) - new Date(b.date))
+
+  const openQuestions = allLog.filter(e => e.type === 'question' && !e.answer)
+  const answeredQuestions = allLog.filter(e => e.type === 'question' && e.answer)
+  const decisions = allLog.filter(e => e.type === 'decision')
+  const pivots = allLog.filter(e => e.type === 'pivot')
+  const unresolvedDeps = allLog.filter(e => e.type === 'dependency' && e.depStatus !== 'resolved')
+
+  // Decisions made while open questions existed at that time
+  const decisionsAheadOfQuestions = decisions.filter(d =>
+    allLog.some(e =>
+      e.type === 'question' &&
+      !e.answer &&
+      new Date(e.date) < new Date(d.date)
+    )
+  )
+
+  const logSummary = allLog.map(e => {
+    const dateStr = new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    let line = `[${e.type.toUpperCase()}] (${dateStr}) ${e.content}`
+    if (e.type === 'question' && e.answer) line += ` → A: ${e.answer}${e.answeredBy ? ` (by ${e.answeredBy})` : ''}`
+    if (e.type === 'question' && !e.answer) line += ` → UNANSWERED`
+    if (e.type === 'decision' && e.evidence) line += ` → Evidence: ${e.evidence}`
+    if (e.type === 'dependency') line += ` | ${e.depStatus === 'resolved' ? 'resolved' : 'UNRESOLVED'}`
+    return line
+  }).join('\n')
+
+  const systemPrompt = `You are a principal product designer with 15+ years of experience. You are known for being direct, asking uncomfortable questions, and refusing to let teams build the wrong thing even when it's easier to just execute.
+
+Your job is to do a critical audit of this work thread — not summarize it, but pressure test it. Read the log like you just walked into a design review. You are looking for:
+
+1. Problem origin — Did this come from user research, product strategy, engineering necessity, or leadership opinion? If there is no user evidence in the log, name that explicitly.
+2. Engineering constraints masquerading as design requirements — Is the team treating technical limitations as fixed facts when they might just be engineering convenience? Would a better-designed system eliminate the constraint entirely rather than working around it?
+3. Symptom vs root cause — Is the work solving the visible symptom or the actual underlying problem? Does the approach add cognitive load instead of reducing it?
+4. Decision quality — Were any decisions made before the right questions were answered? Name the specific ones if so.
+5. Problem clarity — If questions in the log are pointing in multiple directions, the problem isn't fully defined yet. Say that directly.
+6. What you would push back on — Be specific. Not "this needs more research" but "this decision assumes X, which hasn't been validated — if X is wrong the entire approach falls apart."
+
+Tone: Direct, opinionated, and honest. Not a bulleted list of generic concerns. A real point of view — like you just read this log and formed a specific take. If something looks solid, say so. If the log suggests a team trying to solve an unclear problem with a constrained solution, say that too.
+
+Thread:
+- Title: "${thread.title}"
+- Team: ${thread.team || 'not set'} | Status: ${thread.status || 'active'}
+- Summary: ${thread.summary || 'none'}
+- KPI: ${thread.kpi || 'none'}
+- PM: ${thread.pm || 'none'} | Eng Lead: ${thread.engLead || 'none'} | UX: ${thread.uxPartner || 'none'}
+
+Signal stats:
+- Total log entries: ${allLog.length}
+- Open (unanswered) questions: ${openQuestions.length}
+- Answered questions: ${answeredQuestions.length}
+- Decisions logged: ${decisions.length}
+- Pivots: ${pivots.length}
+- Unresolved dependencies: ${unresolvedDeps.length}
+${decisionsAheadOfQuestions.length ? `- Decisions made while questions were still open: ${decisionsAheadOfQuestions.length}` : ''}
+
+Full log (chronological):
+${logSummary || 'No entries yet — not enough signal to pressure test. Come back when you have some log history.'}`
+
+  return callOpenAI(
+    [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: 'Give me your honest read as a principal designer walking into this design review.' }
+    ],
+    900
+  )
+}
+
 export async function improveSummary({ title, summary, linkedThread }) {
   const parts = [`Thread title: "${title}"`]
   if (linkedThread) {

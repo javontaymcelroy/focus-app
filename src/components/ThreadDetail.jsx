@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { generateKPI, improveSummary, getApiKey, chatWithThread } from '../ai'
+import { generateKPI, improveSummary, getApiKey, chatWithThread, pressureTestThread } from '../ai'
 import { BotSparkleFilled } from '@fluentui/react-icons'
 import { getPersistedSize, persistSize } from '../persist'
 
@@ -259,6 +259,30 @@ export default function ThreadDetail({
       setPrevThreadId(thread.id)
     }
   }, [thread.id, prevThreadId])
+
+  const openQCount = (thread.log || []).filter(e => e.type === 'question' && !e.answer).length
+  const decisionCount = (thread.log || []).filter(e => e.type === 'decision').length
+  const showPressureBadge = openQCount >= 2 && decisionCount >= 1
+
+  const handlePressureTest = async () => {
+    if (!getApiKey()) {
+      setAiMessages(m => [...m, { role: 'assistant', content: 'OpenAI API key not set. Add it in Settings (gear icon).' }])
+      setAiChatOpen(true)
+      return
+    }
+    setAiChatOpen(true)
+    setAiMessages(m => [...m, { role: 'user', content: 'Pressure test this thread.' }])
+    setAiLoading(true)
+    try {
+      const reply = await pressureTestThread({ thread })
+      setAiMessages(m => [...m, { role: 'assistant', content: reply }])
+    } catch (err) {
+      setAiMessages(m => [...m, { role: 'assistant', content: `Error: ${err.message}` }])
+    } finally {
+      setAiLoading(false)
+      setTimeout(() => aiChatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+    }
+  }
 
   const allStakeholders = [...new Set([
     ...people.pms, ...people.engLeads, ...(people.uxPartners || []),
@@ -1408,7 +1432,17 @@ export default function ThreadDetail({
               </div>
               <div className="ai-chat-messages">
                 {aiMessages.length === 0 && (
-                  <div className="ai-chat-empty">Ask anything about this thread — its log, progress, blockers, or next steps.</div>
+                  <div className="ai-chat-empty">
+                    <p>Ask anything about this thread — its log, progress, blockers, or next steps.</p>
+                    <button className="ai-pressure-test-btn" onClick={handlePressureTest} disabled={aiLoading}>
+                      ⚡ Pressure test this thread
+                    </button>
+                  </div>
+                )}
+                {aiMessages.length > 0 && (
+                  <button className="ai-pressure-test-inline" onClick={handlePressureTest} disabled={aiLoading}>
+                    ⚡ Pressure test
+                  </button>
                 )}
                 {aiMessages.map((msg, i) => (
                   <div key={i} className={`ai-chat-msg ai-chat-msg--${msg.role}`}>
@@ -1450,9 +1484,10 @@ export default function ThreadDetail({
           <button
             className="ai-chat-fab"
             onClick={() => setAiChatOpen(o => !o)}
-            title="Chat with AI about this thread"
+            title={showPressureBadge ? `${openQCount} open questions — consider a pressure test` : 'Chat with AI about this thread'}
           >
             {aiChatOpen ? '×' : <BotSparkleFilled fontSize={20} />}
+            {!aiChatOpen && showPressureBadge && <span className="ai-fab-badge" />}
           </button>
         </div>
       </div>

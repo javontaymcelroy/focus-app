@@ -3586,11 +3586,24 @@ h1, h2, h3 {
   box-shadow: 0 4px 16px rgba(0,0,0,0.15);
   flex-shrink: 0;
   transition: background 0.2s var(--ease), transform 0.15s var(--ease);
+  position: relative;
 }
 
 .ai-chat-fab:hover {
   background: var(--primary-dark, #4a7a6a);
   transform: scale(1.05);
+}
+
+.ai-fab-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #e8a04a;
+  border: 2px solid white;
+  pointer-events: none;
 }
 
 .ai-chat-popover-body {
@@ -3618,12 +3631,12 @@ h1, h2, h3 {
 }
 
 .ai-chat-empty {
-  font-size: 13px;
-  color: var(--text-muted);
-  line-height: 1.5;
-  text-align: center;
-  margin: auto;
-  padding: 12px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 4px 0;
+  width: 100%;
 }
 
 .ai-chat-msg {
@@ -3706,6 +3719,66 @@ h1, h2, h3 {
 .ai-chat-clear:hover {
   color: var(--text-secondary);
   background: var(--border-light);
+}
+
+.ai-chat-empty p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.ai-pressure-test-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #fdf3e3;
+  border: 1.5px solid #e8a04a;
+  border-radius: var(--radius-sm);
+  color: #b36a00;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  width: 100%;
+  justify-content: center;
+}
+
+.ai-pressure-test-btn:hover {
+  background: #fde8c2;
+  border-color: #c87d1a;
+}
+
+.ai-pressure-test-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ai-pressure-test-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: #fdf3e3;
+  border: 1.5px solid #e8a04a;
+  border-radius: var(--radius-sm);
+  color: #b36a00;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 8px;
+  transition: background 0.15s;
+  align-self: flex-start;
+}
+
+.ai-pressure-test-inline:hover {
+  background: #fde8c2;
+}
+
+.ai-pressure-test-inline:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ---- Progress Section ---- */
