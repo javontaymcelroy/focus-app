@@ -318,6 +318,9 @@ app.post('/api/threads/:id/log', async (req, res) => {
       content: req.body.content || '',
       date: new Date().toISOString()
     };
+    if (req.body.blocking) entry.blocking = req.body.blocking;
+    if (req.body.resolutionDate) entry.resolutionDate = req.body.resolutionDate;
+    if (req.body.depStatus) entry.depStatus = req.body.depStatus;
     thread.log.push(entry);
     thread.updatedAt = new Date().toISOString();
     await saveThread(thread);
@@ -341,6 +344,10 @@ app.put('/api/threads/:id/log/:logId', async (req, res) => {
     if (req.body.type) entry.type = req.body.type;
     if (req.body.content !== undefined) entry.content = req.body.content;
     if (req.body.answer !== undefined) entry.answer = req.body.answer;
+    if (req.body.evidence !== undefined) entry.evidence = req.body.evidence;
+    if (req.body.blocking !== undefined) entry.blocking = req.body.blocking;
+    if (req.body.resolutionDate !== undefined) entry.resolutionDate = req.body.resolutionDate;
+    if (req.body.depStatus !== undefined) entry.depStatus = req.body.depStatus;
     if (req.body.date) entry.date = req.body.date;
     thread.updatedAt = new Date().toISOString();
     await saveThread(thread);

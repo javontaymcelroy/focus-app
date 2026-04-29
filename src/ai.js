@@ -81,6 +81,37 @@ Output ONLY the KPI string — no quotes, no explanation, no preamble.`
   return callOpenAI(messages, 120)
 }
 
+export async function chatWithThread({ thread, messages }) {
+  const logSummary = (thread.log || [])
+    .slice()
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 30)
+    .map(e => `[${e.type.toUpperCase()}] ${e.content}${e.answer ? ` → Answer: ${e.answer}` : ''}`)
+    .join('\n')
+
+  const systemPrompt = `You are a focused, concise work assistant embedded in a PM tool called Focus. You have full context on a specific work thread and help the user think through it — answering questions, surfacing patterns in the log, identifying blockers, and suggesting next steps.
+
+Thread context:
+- Title: "${thread.title}"
+- Team: ${thread.team || 'not set'}
+- Status: ${thread.status || 'active'}
+- Current state: ${thread.state || 'not set'}
+- Next action: ${thread.nextAction || 'not set'}
+- Summary: ${thread.summary || 'none'}
+- KPI: ${thread.kpi || 'none'}
+- PM: ${thread.pm || 'none'} | Eng Lead: ${thread.engLead || 'none'} | UX: ${thread.uxPartner || 'none'}
+
+Thread log (most recent first):
+${logSummary || 'No log entries yet.'}
+
+Be direct and brief. Don't repeat information the user can already see. Focus on insight, not summary.`
+
+  return callOpenAI(
+    [{ role: 'system', content: systemPrompt }, ...messages],
+    600
+  )
+}
+
 export async function improveSummary({ title, summary, linkedThread }) {
   const parts = [`Thread title: "${title}"`]
   if (linkedThread) {

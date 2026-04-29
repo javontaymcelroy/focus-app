@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { generateKPI, improveSummary, getApiKey } from '../ai'
+import { generateKPI, improveSummary, getApiKey, chatWithThread } from '../ai'
+import { BotSparkleFilled } from '@fluentui/react-icons'
 import { getPersistedSize, persistSize } from '../persist'
 
-const LOG_TYPES = ['decision', 'note', 'question', 'win', 'metric', 'feedback', 'goal']
+const LOG_TYPES = ['decision', 'note', 'question', 'win', 'metric', 'feedback', 'goal', 'pivot', 'dependency']
 const CATEGORIES = [
   { value: '', label: 'None' },
   { value: 'project', label: 'Project' },
@@ -160,8 +161,7 @@ export default function ThreadDetail({
 }) {
   const [mode, setMode] = useState('view') // 'view' or 'edit'
   const [title, setTitle] = useState(thread.title)
-  const [state, setState] = useState(thread.state)
-  const [nextAction, setNextAction] = useState(thread.nextAction)
+  const [progressInput, setProgressInput] = useState('')
   const [resumeLink, setResumeLink] = useState(thread.resumeLink)
   const [type, setType] = useState(thread.type)
   const [team, setTeam] = useState(thread.team || '')
@@ -178,13 +178,31 @@ export default function ThreadDetail({
   const [uxPartner, setUxPartner] = useState(thread.uxPartner || '')
   const [status, setStatus] = useState(thread.status)
   const [linkedTo, setLinkedTo] = useState(thread.linkedTo || '')
-  const [logType, setLogType] = useState('decision')
+  const [logType, setLogType] = useState('')
   const [logContent, setLogContent] = useState('')
+  const [depBlocking, setDepBlocking] = useState('')
+  const [depResolutionDate, setDepResolutionDate] = useState('')
   const [editingLogId, setEditingLogId] = useState(null)
   const [editLogType, setEditLogType] = useState('')
   const [editLogContent, setEditLogContent] = useState('')
   const [editingLogDate, setEditingLogDate] = useState(null) // log entry id being date-edited
+  const [aiChatOpen, setAiChatOpen] = useState(false)
+  const [aiMessages, setAiMessages] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(`ai-chat:${thread.id}`)) || [] } catch { return [] }
+  })
+  const [aiInput, setAiInput] = useState('')
+  const [aiLoading, setAiLoading] = useState(false)
+  const aiChatEndRef = useRef(null)
+
+  useEffect(() => {
+    try { localStorage.setItem(`ai-chat:${thread.id}`, JSON.stringify(aiMessages)) } catch {}
+  }, [aiMessages, thread.id])
+
+  useEffect(() => {
+    if (aiChatOpen) setTimeout(() => aiChatEndRef.current?.scrollIntoView({ behavior: 'instant' }), 50)
+  }, [aiChatOpen])
   const [logFilter, setLogFilter] = useState(null) // null = all, or a log type string
+  const [logTab, setLogTab] = useState('log') // 'log' or 'progress'
   const [isAddingTeam, setIsAddingTeam] = useState(false)
   const [newTeamName, setNewTeamName] = useState('')
   const [pushToFocus, setPushToFocus] = useState(thread.pushToFocus || '')
@@ -195,10 +213,11 @@ export default function ThreadDetail({
 
   // Persist textarea resize heights across reloads
   const observersRef = useRef({})
-  const textareaRef = useCallback((key) => (el) => {
+  const textareaRef = useCallback((key, minHeight) => (el) => {
     if (!el) return
     const saved = getPersistedSize(`textarea-${key}`)
-    if (saved) el.style.height = `${saved}px`
+    const applied = saved && (!minHeight || saved >= minHeight) ? saved : minHeight
+    if (applied) el.style.height = `${applied}px`
     if (observersRef.current[key]) observersRef.current[key].disconnect()
     const ro = new ResizeObserver((entries) => {
       for (const entry of entries) {
@@ -220,8 +239,6 @@ export default function ThreadDetail({
   useEffect(() => {
     if (thread.id !== prevThreadId) {
       setTitle(thread.title)
-      setState(thread.state)
-      setNextAction(thread.nextAction)
       setTeam(thread.team || '')
       setCategory(thread.category || '')
       setWorkType(thread.workType || '')
@@ -271,17 +288,16 @@ export default function ThreadDetail({
       setDroppedReason('')
     }
   }
-  const handleStateChange = (e) => setState(e.target.value)
-  const handleNextActionChange = (e) => setNextAction(e.target.value)
+  const handleProgressSnapshot = () => {
+    if (!progressInput.trim()) return
+    onAddLog({ type: 'progress', content: progressInput.trim() })
+    setProgressInput('')
+  }
+
   const handleDropThread = () => {
     if (!droppedReason.trim()) return
     onAddLog({ type: 'decision', content: `Dropped: ${droppedReason.trim()}` })
     setDroppedReason('')
-  }
-
-  const handleSnapshot = () => {
-    if (!state && !nextAction) return
-    onEvolve({ state, nextAction })
   }
 
   const handlePmChange = (value) => setPm(value)
@@ -292,7 +308,7 @@ export default function ThreadDetail({
   // Save all changes at once
   const handleSaveAll = () => {
     const updates = {
-      title, state, nextAction, resumeLink, type, team,
+      title, resumeLink, type, team,
       category, workType, summary, kpis: kpis.filter(k => k.trim()), kpi: kpis.filter(k => k.trim())[0] || '', pm, engLead, uxPartner,
       linkedTo: linkedTo || null,
       pushToFocus: pushToFocus || null,
@@ -307,10 +323,11 @@ export default function ThreadDetail({
 
   const handleCancel = () => {
     // Discard changes — reset to thread values
-    setTitle(thread.title); setState(thread.state); setNextAction(thread.nextAction)
+    setTitle(thread.title)
     setResumeLink(thread.resumeLink); setType(thread.type); setTeam(thread.team || '')
     setCategory(thread.category || ''); setWorkType(thread.workType || '')
-    setSummary(thread.summary || ''); setKpis(initKpis(thread))
+    setSummary(thread.summary || '')
+    setKpis(Array.isArray(thread.kpis) && thread.kpis.length ? thread.kpis : thread.kpi ? [thread.kpi] : [''])
     setPm(thread.pm || ''); setEngLead(thread.engLead || ''); setUxPartner(thread.uxPartner || '')
     setLinkedTo(thread.linkedTo || ''); setStatus(thread.status)
     setPushToFocus(thread.pushToFocus || '')
@@ -396,9 +413,17 @@ export default function ThreadDetail({
 
   const handleAddLog = (e) => {
     e.preventDefault()
-    if (!logContent.trim()) return
-    onAddLog({ type: logType, content: logContent.trim() })
+    if (!logType || !logContent.trim()) return
+    const entry = { type: logType, content: logContent.trim() }
+    if (logType === 'dependency') {
+      if (depBlocking.trim()) entry.blocking = depBlocking.trim()
+      if (depResolutionDate) entry.resolutionDate = depResolutionDate
+      entry.depStatus = 'unresolved'
+    }
+    onAddLog(entry)
     setLogContent('')
+    setDepBlocking('')
+    setDepResolutionDate('')
   }
 
   const handleStartEditLog = (entry) => {
@@ -515,10 +540,6 @@ export default function ThreadDetail({
           </div>
         ))}
 
-        {state && (
-          <div className="detail-view-state">{state}</div>
-        )}
-
         {(pm || engLead || uxPartner) && (
           <div className="thread-card-people">
             {pm && <span>PM: {pm}</span>}
@@ -526,14 +547,6 @@ export default function ThreadDetail({
             {engLead && <span>Eng: {engLead}</span>}
             {(pm || engLead) && uxPartner && <span className="people-sep">·</span>}
             {uxPartner && <span>UX: {uxPartner}</span>}
-          </div>
-        )}
-
-        {nextAction && (
-          <div className="detail-view-next">
-            <span className="thread-card-next-arrow">→</span>
-            <svg className="thread-card-next-shoe" viewBox="0 0 800 800" fill="currentColor"><path d="M723.605 329.74C737.916 349.775 733.359 377.856 713.445 392.339L243.389 734.198C235.427 739.99 226.015 743.049 216.168 743.049H97.0789C81.071 743.049 68.0498 730.026 68.0496 714.021C68.0496 707.072 73.6828 701.439 80.6317 701.439H185.889C190.657 701.439 195.306 699.952 199.193 697.191L717.079 328.647C719.183 327.149 722.103 327.639 723.605 329.74Z"/><path d="M672.087 257.622C684.3 274.72 680.318 298.486 663.197 310.669L188.452 648.514C182.018 653.093 174.317 655.553 166.42 655.553H106.05C85.0628 655.553 68.0496 638.54 68.0496 617.553V612.38C68.0496 599.327 76.3703 587.782 88.7527 583.656L175.02 554.899C197.194 547.505 215.164 531.919 225.615 511.017C229.74 502.765 240.737 500.98 247.259 507.504L256.981 517.226C262.253 522.495 269.16 525.131 276.066 525.131C282.972 525.131 289.879 522.494 295.15 517.226C305.69 506.686 305.69 489.598 295.15 479.055L270.063 453.966C263.723 447.625 262.151 437.938 266.161 429.918C272.52 417.199 289.471 414.448 299.526 424.503L324.615 449.592C329.886 454.861 336.794 457.497 343.7 457.497C350.609 457.497 357.513 454.861 362.784 449.592C373.324 439.052 373.324 421.961 362.784 411.421L308.312 356.949C306.055 354.692 305.495 351.243 306.924 348.388C313.332 335.572 316.718 321.226 316.718 306.899C316.718 306.433 317.28 306.2 317.609 306.529L342.256 331.176C347.527 336.445 354.433 339.081 361.34 339.081C368.246 339.081 375.152 336.445 380.424 331.176C390.964 320.636 390.964 303.545 380.424 293.005L327.844 240.423C320.718 233.297 316.715 223.632 316.715 213.554V167.494C316.715 151.956 326.175 137.983 340.602 132.212L501.053 68.0302C517.312 61.5266 535.91 66.9756 546.088 81.225L672.087 257.622Z"/></svg>
-            {nextAction}
           </div>
         )}
 
@@ -567,30 +580,106 @@ export default function ThreadDetail({
         </div>
       </div>
 
-      {/* Log Section — always visible in view mode */}
+      {/* Log / Progress Section */}
       <div className="log-section">
         <div className="log-section-header">
-          <span className="log-section-title">
-            Thread Log ({thread.log?.length || 0})
-          </span>
+          <div className="log-tab-bar">
+            <button
+              className={`log-tab${logTab === 'log' ? ' log-tab--active' : ''}`}
+              onClick={() => setLogTab('log')}
+            >
+              Thread Log ({(thread.log || []).filter(e => e.type !== 'progress').length})
+            </button>
+            <button
+              className={`log-tab${logTab === 'progress' ? ' log-tab--active' : ''}`}
+              onClick={() => setLogTab('progress')}
+            >
+              Progress ({(thread.log || []).filter(e => e.type === 'progress').length})
+            </button>
+          </div>
         </div>
 
+        {logTab === 'progress' ? (
+          <>
+            <div className="progress-capture-row">
+              <textarea
+                className="progress-capture-input"
+                placeholder="What's the current state? What changed?"
+                value={progressInput}
+                onChange={e => setProgressInput(e.target.value)}
+                rows={2}
+                onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleProgressSnapshot() }}
+              />
+              <button className="btn-snapshot" onClick={handleProgressSnapshot} disabled={!progressInput.trim()}>
+                Snapshot
+              </button>
+            </div>
+            <div className="log-timeline">
+              {groupLogByDay((thread.log || []).filter(e => e.type === 'progress')).map(group => (
+                <div key={group.label} className="log-day-group">
+                  <div className="log-day-header">
+                    <span className="log-day-label">{group.label}</span>
+                    <span className="log-day-line" />
+                  </div>
+                  <div className="log-day-entries">
+                    {group.entries.map(entry => (
+                      <div key={entry.id} className="log-entry">
+                        <div className="log-entry-main">
+                          <span className="log-entry-time">{formatTime(entry.date)}</span>
+                          <div className="log-entry-body">
+                            <span className="log-entry-content">{entry.content}</span>
+                          </div>
+                        </div>
+                        <div className="log-entry-actions">
+                          <button className="log-entry-delete" onClick={() => onDeleteLog(entry.id)} title="Delete">×</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {(thread.log || []).filter(e => e.type === 'progress').length === 0 && (
+                <div className="log-empty">No progress snapshots yet.</div>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
         <form className="log-add-form" onSubmit={handleAddLog}>
-          <div className="log-add-top">
+          <input
+            className="log-add-input"
+            value={logContent}
+            onChange={e => setLogContent(e.target.value)}
+            placeholder={logType === 'dependency' ? "What is it waiting on?" : "Add an entry..."}
+          />
+          {logType === 'dependency' && (
+            <div className="dep-add-fields">
+              <input
+                value={depBlocking}
+                onChange={e => setDepBlocking(e.target.value)}
+                placeholder="What's blocked? (optional)"
+              />
+              <input
+                type="date"
+                value={depResolutionDate}
+                onChange={e => setDepResolutionDate(e.target.value)}
+                title="Resolution needed by"
+              />
+            </div>
+          )}
+          <div className="log-add-bottom">
             <select value={logType} onChange={e => setLogType(e.target.value)}>
+              <option value="">Select type...</option>
               {LOG_TYPES.map(t => (
                 <option key={t} value={t}>
                   {t.charAt(0).toUpperCase() + t.slice(1)}
                 </option>
               ))}
             </select>
-            <input
-              value={logContent}
-              onChange={e => setLogContent(e.target.value)}
-              placeholder="Add an entry..."
-            />
+            <button type="submit" className="log-add-btn" disabled={!logType || !logContent.trim()}>
+              Add Entry
+            </button>
           </div>
-          <button type="submit" className="log-add-btn">Add Entry</button>
         </form>
 
         {thread.log?.length > 0 && (
@@ -599,7 +688,7 @@ export default function ThreadDetail({
               className={`log-filter-chip${logFilter === null ? ' active' : ''}`}
               onClick={() => setLogFilter(null)}
             >All</button>
-            {[...new Set(thread.log.map(e => e.type))].map(t => (
+            {[...new Set(thread.log.filter(e => e.type !== 'progress').map(e => e.type))].map(t => (
               <button
                 key={t}
                 className={`log-filter-chip${logFilter === t ? ' active' : ''}`}
@@ -611,7 +700,7 @@ export default function ThreadDetail({
 
         <div className="log-timeline">
           {thread.log?.length > 0 ? (
-            groupLogByDay(logFilter ? thread.log.filter(e => e.type === logFilter) : thread.log).map(group => (
+            groupLogByDay((logFilter ? thread.log.filter(e => e.type === logFilter) : thread.log).filter(e => e.type !== 'progress')).map(group => (
               <div key={group.label} className="log-day-group">
                 <div className="log-day-header">
                   <span className="log-day-label">{group.label}</span>
@@ -619,7 +708,7 @@ export default function ThreadDetail({
                 </div>
                 <div className="log-day-entries">
                   {group.entries.map(entry => (
-                    <div key={entry.id} className={`log-entry ${entry.type === 'progress' ? 'log-entry-progress' : ''}`}>
+                    <div key={entry.id} className={`log-entry${entry.type === 'dependency' ? ` log-entry--dep-${entry.depStatus || 'unresolved'}` : ''}`}>
                       {editingLogId === entry.id ? (
                         <div className="log-edit-form">
                           <div className="log-edit-top">
@@ -683,6 +772,46 @@ export default function ThreadDetail({
                                 {entry.type}
                               </span>
                               <span className="log-entry-content">{entry.content}</span>
+                              {entry.type === 'decision' && (
+                            <div className="log-question-answer">
+                              {entry.evidence ? (
+                                <div className="log-answer-display">
+                                  <span className="log-answer-label">Evidence:</span>
+                                  <span className="log-answer-text">{entry.evidence}</span>
+                                  <button
+                                    className="log-answer-edit-btn"
+                                    onClick={() => {
+                                      const el = document.getElementById(`evidence-${entry.id}`)
+                                      if (el) { el.style.display = 'flex'; el.querySelector('input').value = entry.evidence; el.querySelector('input').focus() }
+                                    }}
+                                    title="Edit evidence"
+                                  >✎</button>
+                                </div>
+                              ) : (
+                                <span className="log-answer-placeholder">Evidence</span>
+                              )}
+                              <div id={`evidence-${entry.id}`} className="log-answer-input" style={{ display: entry.evidence ? 'none' : 'flex' }}>
+                                <input
+                                  placeholder="What supports this decision?"
+                                  defaultValue={entry.evidence || ''}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter' && e.target.value.trim()) {
+                                      onEditLog(entry.id, { evidence: e.target.value.trim() })
+                                      e.target.parentElement.style.display = 'none'
+                                    }
+                                    if (e.key === 'Escape') e.target.parentElement.style.display = 'none'
+                                  }}
+                                />
+                                <button onClick={e => {
+                                  const input = e.target.parentElement.querySelector('input')
+                                  if (input.value.trim()) {
+                                    onEditLog(entry.id, { evidence: input.value.trim() })
+                                    e.target.parentElement.style.display = 'none'
+                                  }
+                                }}>Save</button>
+                              </div>
+                            </div>
+                          )}
                               {entry.type === 'question' && (
                             <div className="log-question-answer">
                               {entry.answer ? (
@@ -725,6 +854,28 @@ export default function ThreadDetail({
                               </div>
                             </div>
                           )}
+                              {entry.type === 'dependency' && (
+                            <div className="log-dep-details">
+                              {entry.blocking && (
+                                <div className="log-dep-row">
+                                  <span className="log-dep-label">Blocking:</span>
+                                  <span>{entry.blocking}</span>
+                                </div>
+                              )}
+                              {entry.resolutionDate && (
+                                <div className="log-dep-row">
+                                  <span className="log-dep-label">Needed by:</span>
+                                  <span>{new Date(entry.resolutionDate + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                                </div>
+                              )}
+                              <button
+                                className={`log-dep-status log-dep-status--${entry.depStatus || 'unresolved'}`}
+                                onClick={() => onEditLog(entry.id, { depStatus: entry.depStatus === 'resolved' ? 'unresolved' : 'resolved' })}
+                              >
+                                {entry.depStatus === 'resolved' ? '✓ Resolved' : '● Unresolved'}
+                              </button>
+                            </div>
+                          )}
                             </div>
                           </div>
                           <div className="log-entry-actions">
@@ -756,6 +907,8 @@ export default function ThreadDetail({
             </div>
           )}
         </div>
+          </>
+        )}
       </div>
     </div>
   )
@@ -785,11 +938,11 @@ export default function ThreadDetail({
           </button>
         </div>
         <textarea
-          ref={textareaRef('summary')}
+          ref={textareaRef('summary', 160)}
           value={summary}
           onChange={handleSummaryChange}
           placeholder='Brief description of this thread — what is it and why does it matter?'
-          rows={2}
+          rows={5}
         />
       </div>
 
@@ -1106,37 +1259,6 @@ export default function ThreadDetail({
         <div className="ai-error">{aiError}</div>
       )}
 
-      {/* Current State & Next Action */}
-      <div className="detail-field">
-        <div className="detail-field-label">Current State</div>
-        <textarea
-          ref={textareaRef('state')}
-          value={state}
-          onChange={handleStateChange}
-          placeholder='e.g. "Reviewed failed states in QA — 3 of 5 edge cases handled, waiting on API fix for the other 2"'
-          rows={2}
-        />
-      </div>
-
-      <div className="detail-field">
-        <div className="detail-field-label">Next Action</div>
-        <input
-          value={nextAction}
-          onChange={handleNextActionChange}
-          placeholder="What's the next move?"
-        />
-      </div>
-
-      {(state || nextAction) && (
-        <button
-          type="button"
-          className="btn-snapshot"
-          onClick={handleSnapshot}
-        >
-          Snapshot Progress
-        </button>
-      )}
-
       {/* Resume Link */}
       <div className="detail-field">
         <div className="detail-field-label">Resume Link</div>
@@ -1226,6 +1348,66 @@ export default function ThreadDetail({
 
         <div className={`panel-content-wrap ${navAction !== 'open' ? 'panel-content-fade' : ''}`} key={thread.id}>
           {mode === 'view' ? renderViewMode() : renderEditMode()}
+        </div>
+
+        {/* AI Chat Popover */}
+        <div className={`ai-chat-popover ${aiChatOpen ? 'ai-chat-popover--open' : ''}`}>
+          {aiChatOpen && (
+            <div className="ai-chat-popover-body">
+              <div className="ai-chat-popover-header">
+                <span className="ai-chat-popover-title">Thread AI</span>
+                {aiMessages.length > 0 && (
+                  <button className="ai-chat-clear" onClick={() => setAiMessages([])} title="Clear history">Clear</button>
+                )}
+              </div>
+              <div className="ai-chat-messages">
+                {aiMessages.length === 0 && (
+                  <div className="ai-chat-empty">Ask anything about this thread — its log, progress, blockers, or next steps.</div>
+                )}
+                {aiMessages.map((msg, i) => (
+                  <div key={i} className={`ai-chat-msg ai-chat-msg--${msg.role}`}>
+                    {msg.content}
+                  </div>
+                ))}
+                {aiLoading && <div className="ai-chat-msg ai-chat-msg--assistant ai-chat-typing">···</div>}
+                <div ref={aiChatEndRef} />
+              </div>
+              <div className="ai-chat-input-row">
+                <input
+                  className="ai-chat-input"
+                  placeholder="Ask about this thread..."
+                  value={aiInput}
+                  onChange={e => setAiInput(e.target.value)}
+                  onKeyDown={async e => {
+                    if (e.key === 'Enter' && aiInput.trim() && !aiLoading) {
+                      const userMsg = { role: 'user', content: aiInput.trim() }
+                      const next = [...aiMessages, userMsg]
+                      setAiMessages(next)
+                      setAiInput('')
+                      setAiLoading(true)
+                      try {
+                        const reply = await chatWithThread({ thread, messages: next })
+                        setAiMessages(m => [...m, { role: 'assistant', content: reply }])
+                      } catch (err) {
+                        setAiMessages(m => [...m, { role: 'assistant', content: `Error: ${err.message}` }])
+                      } finally {
+                        setAiLoading(false)
+                        setTimeout(() => aiChatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50)
+                      }
+                    }
+                  }}
+                  autoFocus
+                />
+              </div>
+            </div>
+          )}
+          <button
+            className="ai-chat-fab"
+            onClick={() => setAiChatOpen(o => !o)}
+            title="Chat with AI about this thread"
+          >
+            {aiChatOpen ? '×' : <BotSparkleFilled fontSize={20} />}
+          </button>
         </div>
       </div>
     </>

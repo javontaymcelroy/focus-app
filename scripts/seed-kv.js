@@ -1,4 +1,5 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
 import { kv } from '@vercel/kv';
 import fs from 'fs/promises';
 import path from 'path';
