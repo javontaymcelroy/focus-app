@@ -1,6 +1,11 @@
 import dotenv from 'dotenv';
 dotenv.config({ path: '.env.local' });
-import { kv } from '@vercel/kv';
+import { Redis } from '@upstash/redis';
+
+const kv = new Redis({
+  url: process.env.KV_REST_API_URL,
+  token: process.env.KV_REST_API_TOKEN,
+});
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';

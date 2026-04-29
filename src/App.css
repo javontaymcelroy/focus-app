@@ -2454,6 +2454,55 @@ h1, h2, h3 {
 .log-entry-progress {
 }
 
+.log-answered-by-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.log-answered-by-select {
+  font-size: 12px;
+  padding: 2px 6px;
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: white;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.log-answered-by-add {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex: 1;
+}
+
+.log-answered-by-add input {
+  flex: 1;
+  padding: 3px 8px;
+  font-size: 12px;
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: white;
+}
+
+.log-answered-by-add button {
+  padding: 2px 8px;
+  font-size: 12px;
+  border: 1.5px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: white;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.log-answered-by-add button:first-of-type {
+  background: var(--primary-subtle);
+  color: var(--primary);
+  border-color: var(--primary-light);
+}
+
 .btn-snapshot {
   display: inline-flex;
   align-items: center;

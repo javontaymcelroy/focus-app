@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@fluentui/react-icons": "^2.0.323",
-    "@vercel/kv": "^3.0.0",
+    "@upstash/redis": "^1.37.0",
     "cors": "^2.8.5",
     "dotenv": "^17.4.1",
     "express": "^4.21.0"

@@ -344,6 +344,7 @@ app.put('/api/threads/:id/log/:logId', async (req, res) => {
     if (req.body.type) entry.type = req.body.type;
     if (req.body.content !== undefined) entry.content = req.body.content;
     if (req.body.answer !== undefined) entry.answer = req.body.answer;
+    if (req.body.answeredBy !== undefined) entry.answeredBy = req.body.answeredBy;
     if (req.body.evidence !== undefined) entry.evidence = req.body.evidence;
     if (req.body.blocking !== undefined) entry.blocking = req.body.blocking;
     if (req.body.resolutionDate !== undefined) entry.resolutionDate = req.body.resolutionDate;

@@ -186,6 +186,8 @@ export default function ThreadDetail({
   const [editLogType, setEditLogType] = useState('')
   const [editLogContent, setEditLogContent] = useState('')
   const [editingLogDate, setEditingLogDate] = useState(null) // log entry id being date-edited
+  const [addingAnsweredBy, setAddingAnsweredBy] = useState(null) // entry id in "add new" mode
+  const [newAnsweredByName, setNewAnsweredByName] = useState('')
   const [aiChatOpen, setAiChatOpen] = useState(false)
   const [aiMessages, setAiMessages] = useState(() => {
     try { return JSON.parse(localStorage.getItem(`ai-chat:${thread.id}`)) || [] } catch { return [] }
@@ -257,6 +259,11 @@ export default function ThreadDetail({
       setPrevThreadId(thread.id)
     }
   }, [thread.id, prevThreadId])
+
+  const allStakeholders = [...new Set([
+    ...people.pms, ...people.engLeads, ...(people.uxPartners || []),
+    thread.pm, thread.engLead, thread.uxPartner
+  ].filter(Boolean))]
 
   // Local-only change handlers — nothing saves until "Done editing"
   const handleTitleChange = (e) => setTitle(e.target.value)
@@ -852,6 +859,45 @@ export default function ThreadDetail({
                                   }
                                 }}>Save</button>
                               </div>
+                              {entry.answer && (
+                                <div className="log-answered-by-row">
+                                  <span className="log-dep-label">By:</span>
+                                  {addingAnsweredBy === entry.id ? (
+                                    <div className="log-answered-by-add">
+                                      <input
+                                        autoFocus
+                                        value={newAnsweredByName}
+                                        placeholder="Name"
+                                        onChange={e => setNewAnsweredByName(e.target.value)}
+                                        onKeyDown={e => {
+                                          if (e.key === 'Enter' && newAnsweredByName.trim()) {
+                                            onEditLog(entry.id, { answeredBy: newAnsweredByName.trim() })
+                                            setAddingAnsweredBy(null); setNewAnsweredByName('')
+                                          }
+                                          if (e.key === 'Escape') { setAddingAnsweredBy(null); setNewAnsweredByName('') }
+                                        }}
+                                      />
+                                      <button onClick={() => { if (newAnsweredByName.trim()) { onEditLog(entry.id, { answeredBy: newAnsweredByName.trim() }); setAddingAnsweredBy(null); setNewAnsweredByName('') } }}>Save</button>
+                                      <button onClick={() => { setAddingAnsweredBy(null); setNewAnsweredByName('') }}>×</button>
+                                    </div>
+                                  ) : (
+                                    <select
+                                      className="log-answered-by-select"
+                                      value={entry.answeredBy || ''}
+                                      onChange={e => {
+                                        if (e.target.value === '__add__') setAddingAnsweredBy(entry.id)
+                                        else onEditLog(entry.id, { answeredBy: e.target.value })
+                                      }}
+                                    >
+                                      <option value="">— stakeholder</option>
+                                      {allStakeholders.map(name => (
+                                        <option key={name} value={name}>{name}</option>
+                                      ))}
+                                      <option value="__add__">+ Add name...</option>
+                                    </select>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           )}
                               {entry.type === 'dependency' && (

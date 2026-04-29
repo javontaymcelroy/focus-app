@@ -82,33 +82,73 @@ Output ONLY the KPI string — no quotes, no explanation, no preamble.`
 }
 
 export async function chatWithThread({ thread, messages }) {
-  const logSummary = (thread.log || [])
-    .slice()
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
-    .slice(0, 30)
-    .map(e => `[${e.type.toUpperCase()}] ${e.content}${e.answer ? ` → Answer: ${e.answer}` : ''}`)
-    .join('\n')
+  const now = new Date()
+  const nowStr = now.toLocaleString('en-US', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true
+  })
 
-  const systemPrompt = `You are a focused, concise work assistant embedded in a PM tool called Focus. You have full context on a specific work thread and help the user think through it — answering questions, surfacing patterns in the log, identifying blockers, and suggesting next steps.
+  const daysSince = (iso) => {
+    const d = Math.floor((now - new Date(iso)) / 86400000)
+    return d === 0 ? 'today' : d === 1 ? 'yesterday' : `${d}d ago`
+  }
 
-Thread context:
+  const allLog = (thread.log || []).slice().sort((a, b) => new Date(b.date) - new Date(a.date))
+
+  const logLines = allLog.slice(0, 40).map(e => {
+    const dateStr = new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    let line = `[${e.type.toUpperCase()}] (${dateStr}, ${daysSince(e.date)}) ${e.content}`
+    if (e.type === 'question') {
+      line += e.answer
+        ? ` → Answered${e.answeredBy ? ` by ${e.answeredBy}` : ''}: ${e.answer}`
+        : ' → UNANSWERED'
+    }
+    if (e.type === 'decision' && e.evidence) line += ` → Evidence: ${e.evidence}`
+    if (e.type === 'dependency') {
+      if (e.blocking) line += ` | Blocks: ${e.blocking}`
+      if (e.resolutionDate) line += ` | Needed by: ${e.resolutionDate}`
+      line += ` | ${e.depStatus === 'resolved' ? 'RESOLVED' : 'UNRESOLVED'}`
+    }
+    return line
+  }).join('\n')
+
+  const openQuestions = allLog.filter(e => e.type === 'question' && !e.answer)
+  const unresolvedDeps = allLog.filter(e => e.type === 'dependency' && e.depStatus !== 'resolved')
+
+  const openSection = [
+    openQuestions.length
+      ? `Open questions (${openQuestions.length}):\n${openQuestions.map(q => `  - ${q.content}`).join('\n')}`
+      : null,
+    unresolvedDeps.length
+      ? `Unresolved dependencies (${unresolvedDeps.length}):\n${unresolvedDeps.map(d => `  - ${d.content}${d.blocking ? ` (blocks: ${d.blocking})` : ''}${d.resolutionDate ? ` (needed by: ${d.resolutionDate})` : ''}`).join('\n')}`
+      : null,
+  ].filter(Boolean).join('\n\n')
+
+  const lastUpdated = thread.updatedAt ? daysSince(thread.updatedAt) : 'unknown'
+
+  const systemPrompt = `You are a focused work assistant in a PM tool called Focus. Current time: ${nowStr}.
+
+Your primary role is helping the user recover context — especially after time away or a context switch. You have their full thread log with dates, so use them. Say things like "you last touched this 3 days ago" or "that question has been open since Tuesday." Be specific, be brief. Surface gaps and next steps — don't just restate what's already visible.
+
+Thread:
 - Title: "${thread.title}"
-- Team: ${thread.team || 'not set'}
-- Status: ${thread.status || 'active'}
-- Current state: ${thread.state || 'not set'}
-- Next action: ${thread.nextAction || 'not set'}
+- Team: ${thread.team || 'not set'} | Status: ${thread.status || 'active'} | Last updated: ${lastUpdated}
 - Summary: ${thread.summary || 'none'}
 - KPI: ${thread.kpi || 'none'}
 - PM: ${thread.pm || 'none'} | Eng Lead: ${thread.engLead || 'none'} | UX: ${thread.uxPartner || 'none'}
+${openSection ? `\nOpen items right now:\n${openSection}\n` : ''}
+Log (newest first, up to 40 entries):
+${logLines || 'No log entries yet.'}
 
-Thread log (most recent first):
-${logSummary || 'No log entries yet.'}
-
-Be direct and brief. Don't repeat information the user can already see. Focus on insight, not summary.`
+Query guidance:
+- "Where did I leave off?" → most recent work + clearest next step.
+- "What am I waiting on?" → unresolved deps + unanswered questions with age.
+- "What's still open?" → open questions, unresolved deps, unclear next steps.
+- "What did I decide about X?" → find it in the log, include evidence if present.`
 
   return callOpenAI(
     [{ role: 'system', content: systemPrompt }, ...messages],
-    600
+    700
   )
 }
 
