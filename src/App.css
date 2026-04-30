@@ -3721,6 +3721,18 @@ h1, h2, h3 {
   background: var(--border-light);
 }
 
+.ai-chat-mode-badge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #b36a00;
+  background: #fdf3e3;
+  border: 1px solid #e8a04a;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
 .ai-chat-empty p {
   margin: 0;
   font-size: 13px;

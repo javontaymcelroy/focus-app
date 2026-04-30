@@ -194,6 +194,7 @@ export default function ThreadDetail({
   })
   const [aiInput, setAiInput] = useState('')
   const [aiLoading, setAiLoading] = useState(false)
+  const [chatMode, setChatMode] = useState('normal') // 'normal' | 'pressure'
   const aiChatEndRef = useRef(null)
 
   useEffect(() => {
@@ -271,10 +272,11 @@ export default function ThreadDetail({
       return
     }
     setAiChatOpen(true)
+    setChatMode('pressure')
     setAiMessages(m => [...m, { role: 'user', content: 'Pressure test this thread.' }])
     setAiLoading(true)
     try {
-      const reply = await pressureTestThread({ thread })
+      const reply = await pressureTestThread({ thread, linkedThread })
       setAiMessages(m => [...m, { role: 'assistant', content: reply }])
     } catch (err) {
       setAiMessages(m => [...m, { role: 'assistant', content: `Error: ${err.message}` }])
@@ -1427,8 +1429,9 @@ export default function ThreadDetail({
               <div className="ai-chat-popover-header">
                 <span className="ai-chat-popover-title">Thread AI</span>
                 {aiMessages.length > 0 && (
-                  <button className="ai-chat-clear" onClick={() => setAiMessages([])} title="Clear history">Clear</button>
+                  <button className="ai-chat-clear" onClick={() => { setAiMessages([]); setChatMode('normal') }} title="Clear history">Clear</button>
                 )}
+                {chatMode === 'pressure' && <span className="ai-chat-mode-badge">Pressure test</span>}
               </div>
               <div className="ai-chat-messages">
                 {aiMessages.length === 0 && (
@@ -1466,7 +1469,7 @@ export default function ThreadDetail({
                       setAiInput('')
                       setAiLoading(true)
                       try {
-                        const reply = await chatWithThread({ thread, messages: next })
+                        const reply = await chatWithThread({ thread, messages: next, mode: chatMode, linkedThread })
                         setAiMessages(m => [...m, { role: 'assistant', content: reply }])
                       } catch (err) {
                         setAiMessages(m => [...m, { role: 'assistant', content: `Error: ${err.message}` }])
