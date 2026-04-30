@@ -1,7 +1,7 @@
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
-const MODEL_DEFAULT = 'gpt-4o'      // KPI, summary, general chat
-const MODEL_CHAT = 'o4-mini'        // context recovery + pressure follow-up
-const MODEL_PRESSURE = 'o3'         // pressure test initial pass
+const MODEL_DEFAULT = 'gpt-4o'
+const MODEL_CHAT = 'gpt-4o'
+const MODEL_PRESSURE = 'gpt-4o'
 const STORAGE_KEY = 'focus_openai_api_key'
 
 export function getApiKey() {

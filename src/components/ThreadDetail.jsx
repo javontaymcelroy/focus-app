@@ -1439,13 +1439,13 @@ export default function ThreadDetail({
                     <p>Ask anything about this thread — its log, progress, blockers, or next steps.</p>
                     <button className="ai-pressure-test-btn" onClick={handlePressureTest} disabled={aiLoading}>
                       ⚡ Pressure test this thread
-                      <span className="ai-model-tag">o3</span>
+                      <span className="ai-model-tag">gpt-4o</span>
                     </button>
                   </div>
                 )}
                 {aiMessages.length > 0 && (
                   <button className="ai-pressure-test-inline" onClick={handlePressureTest} disabled={aiLoading}>
-                    ⚡ Pressure test <span className="ai-model-tag">o3</span>
+                    ⚡ Pressure test <span className="ai-model-tag">gpt-4o</span>
                   </button>
                 )}
                 {aiMessages.map((msg, i) => (
@@ -1457,7 +1457,7 @@ export default function ThreadDetail({
                 <div ref={aiChatEndRef} />
               </div>
               <div className="ai-chat-input-row">
-                <span className="ai-chat-model-label">o4-mini</span>
+                <span className="ai-chat-model-label">gpt-4o</span>
                 <input
                   className="ai-chat-input"
                   placeholder="Ask about this thread..."
