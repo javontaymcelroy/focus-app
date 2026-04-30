@@ -1,5 +1,7 @@
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions'
-const MODEL = 'gpt-4o'
+const MODEL_DEFAULT = 'gpt-4o'      // KPI, summary, general chat
+const MODEL_CHAT = 'o4-mini'        // context recovery + pressure follow-up
+const MODEL_PRESSURE = 'o3'         // pressure test initial pass
 const STORAGE_KEY = 'focus_openai_api_key'
 
 export function getApiKey() {
@@ -10,11 +12,17 @@ export function setApiKey(key) {
   localStorage.setItem(STORAGE_KEY, key)
 }
 
-async function callOpenAI(messages, maxTokens = 256) {
+// o-series reasoning models don't accept temperature
+const isReasoningModel = (model) => /^o\d/.test(model)
+
+async function callOpenAI(messages, maxTokens = 256, model = MODEL_DEFAULT) {
   const apiKey = getApiKey()
   if (!apiKey) {
     throw new Error('OpenAI API key not set. Add it in Settings (gear icon).')
   }
+
+  const body = { model, messages, max_completion_tokens: maxTokens }
+  if (!isReasoningModel(model)) body.temperature = 0.7
 
   const res = await fetch(OPENAI_API_URL, {
     method: 'POST',
@@ -22,12 +30,7 @@ async function callOpenAI(messages, maxTokens = 256) {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`
     },
-    body: JSON.stringify({
-      model: MODEL,
-      messages,
-      max_completion_tokens: maxTokens,
-      temperature: 0.7
-    })
+    body: JSON.stringify(body)
   })
 
   if (!res.ok) {
@@ -204,7 +207,7 @@ ${ctx.header}
 Log (chronological):
 ${logText}`
 
-    return callOpenAI([{ role: 'system', content: systemPrompt }, ...messages], 600)
+    return callOpenAI([{ role: 'system', content: systemPrompt }, ...messages], 600, MODEL_CHAT)
   }
 
   // Normal mode — context recovery
@@ -236,7 +239,7 @@ Query guidance:
 - "What's still open?" → open questions, unresolved deps, unclear next steps.
 - "What did I decide about X?" → find it in the log, include evidence if present.`
 
-  return callOpenAI([{ role: 'system', content: systemPrompt }, ...messages], 700)
+  return callOpenAI([{ role: 'system', content: systemPrompt }, ...messages], 700, MODEL_CHAT)
 }
 
 export async function pressureTestThread({ thread, linkedThread = null }) {
@@ -357,7 +360,8 @@ ${logText}`
       { role: 'system', content: systemPrompt },
       { role: 'user', content: 'Pressure test this.' }
     ],
-    900
+    900,
+    MODEL_PRESSURE
   )
 }
 
