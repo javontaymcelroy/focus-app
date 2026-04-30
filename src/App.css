@@ -3671,8 +3671,19 @@ h1, h2, h3 {
 
 .ai-chat-input-row {
   border-top: 1px solid var(--border);
-  padding: 10px 12px;
+  padding: 8px 12px 10px;
   background: white;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ai-chat-model-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  text-transform: uppercase;
 }
 
 .ai-chat-input {
@@ -3765,6 +3776,17 @@ h1, h2, h3 {
 .ai-pressure-test-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.ai-model-tag {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  background: rgba(0,0,0,0.12);
+  border-radius: 3px;
+  padding: 1px 5px;
+  margin-left: 6px;
+  opacity: 0.8;
 }
 
 .ai-pressure-test-inline {
